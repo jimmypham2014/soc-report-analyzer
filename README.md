@@ -271,6 +271,57 @@ file) were also checked in a real browser.
 - `gatherUsageStats = false`: no usage statistics sent to Streamlit.
 - `toolbarMode = "minimal"`: hides the "Deploy" button.
 
+## What I learned
+
+I work in GRC and built this to learn how to make my own tools. Things I
+took away, in no particular order:
+
+**About building it**
+
+- **PDFs don't contain tables.** They store words at positions on a page, so
+  a test-results table comes out with its columns jumbled together. I
+  designed around that: match on phrases like "Exception noted", keep the
+  page number attached to every piece of text from the very first step, and
+  always point the reviewer back to the page.
+- **Regex is a good first pass, and the edge cases are where the work is.**
+  The hard parts weren't finding "exception noted" - they were *not* counting
+  "No exceptions noted", not reading "unqualified" as "qualified", and not
+  treating the AICPA standard's title (which lists all five Trust Services
+  Criteria) as the report's scope.
+- **A test only proves something if it fails when the code is wrong.** I
+  deliberately broke the "No exceptions noted" check to confirm the tests
+  caught it. I also learned to test boundaries (90 vs 91 days, 5 vs 6
+  months) and to use mocks so the Claude tests run free, offline, with no key.
+- **Streamlit re-runs the whole script on every click.** That keeps the code
+  simple, but it means caching slow work, keeping results in
+  `st.session_state` (or a re-run would call the paid API again), and giving
+  widgets keys so checklist answers survive.
+- **Using an LLM safely in a tool:** send only the pages that matter and show
+  the user exactly what will be sent; ask for a fixed JSON schema and reject
+  answers that don't match it; wrap document text so it's treated as data,
+  not instructions (prompt injection); keep the API key in an environment
+  variable, never in code.
+
+**About GRC tooling**
+
+- **"Not found" is not "clean."** If the tool can't find the opinion or the
+  period, the flag is amber, never green. A scanned PDF stops with an OCR
+  message instead of showing zero exceptions.
+- **Automation should support the reviewer, not sign off.** The checklist
+  shows what the tool found, but every item starts as "Not reviewed" and only
+  a person changes it. The memo says how many items are still open.
+- **Privacy by default.** The app only listens on localhost, Streamlit's
+  usage statistics and Deploy button are off, and `.gitignore` blocks every
+  PDF except the fake test reports - important with a public repo.
+- **Writing the rules down made me understand them better.** Turning review
+  steps into code forced precise answers: what exactly counts as stale, when
+  a bridge letter is needed, why a carve-out means requesting the
+  subservice org's own SOC report, and what CUECs and CSOCs ask of each side.
+
+**What I'd do next:** test it against real reports (public SOC 3s are a start)
+to find wording the patterns miss, add more fake reports covering clean and
+SOC 1 cases, and measure how often the regex and the Claude analysis agree.
+
 ## Limitations
 
 - **Page numbers are PDF page numbers**, not the numbers printed in the
