@@ -23,14 +23,52 @@ analysis step (stage 5), which sends selected excerpts to the Claude API.
 
 ## Setup (one time)
 
+You need Python 3.12 or 3.13 and Git.
+
+### Mac / Linux
+
 ```bash
-cd soc-analyzer
+git clone https://github.com/jimmypham2014/soc-report-analyzer.git
+cd soc-report-analyzer
 python3 -m venv .venv            # create an isolated Python environment
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
+source .venv/bin/activate        # turn it on for this terminal
 pip install -r requirements.txt  # install the libraries
 ```
 
 Run `source .venv/bin/activate` again each time you open a new terminal.
+
+### Windows (PowerShell)
+
+When installing Python from python.org, tick **"Add python.exe to PATH"**.
+If `python` opens the Microsoft Store, use `py` instead.
+
+```powershell
+cd $HOME
+git clone https://github.com/jimmypham2014/soc-report-analyzer.git
+cd soc-report-analyzer
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+Your prompt starts with `(.venv)` once activation works. Run
+`.venv\Scripts\Activate.ps1` again each time you open PowerShell.
+
+**"Running scripts is disabled on this system"?** That's a Windows security
+setting, common on work laptops. Either skip activation and prefix commands
+with the venv's Python (changes no settings):
+
+```powershell
+.venv\Scripts\python -m pip install -r requirements.txt
+.venv\Scripts\python -m pytest
+.venv\Scripts\python -m streamlit run app.py
+```
+
+or allow local scripts for your user only (check with IT on a work machine):
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
 
 ## Run the web app
 
