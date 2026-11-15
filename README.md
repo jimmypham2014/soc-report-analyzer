@@ -1,5 +1,8 @@
 # SOC Report Analyzer
 
+<img width="1482" height="1274" alt="image" src="https://github.com/user-attachments/assets/abbc1468-5c32-41f2-86be-0dfd399bcbae" />
+
+
 A local tool that reads a SOC 1 or SOC 2 report (PDF) and pulls out what a
 vendor-risk reviewer needs: report type, period, opinion, exceptions, CUECs,
 subservice organizations, and review flags.
