@@ -17,6 +17,17 @@ generated from the fake report in `tests/fixtures/`.
 > **Results are a first pass.** The tool finds text with pattern matching.
 > Always verify findings against the report itself.
 
+## Demo
+
+A walkthrough using the fake sample report included in this repo (no real
+vendor data):
+
+<!-- DEMO VIDEO: in GitHub's README editor, put the cursor on the empty line
+     below this comment and drag your .mp4 in (under 10 MB). GitHub inserts a
+     https://github.com/user-attachments/assets/... link that plays as a video.
+     Then delete this comment. -->
+
+
 ## Status
 
 | Stage | What it adds                     | Status |
