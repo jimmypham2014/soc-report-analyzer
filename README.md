@@ -16,7 +16,7 @@ analysis step (stage 5), which sends selected excerpts to the Claude API.
 |-------|----------------------------------|--------|
 | 1     | Setup + PDF text by page         | Done   |
 | 2     | Rule-based field extraction      | Done   |
-| 3     | Red / amber / green flags        | Todo   |
+| 3     | Red / amber / green flags        | Done   |
 | 4     | Streamlit web UI                 | Todo   |
 | 5     | Optional Claude analysis         | Todo   |
 | 6     | Reviewer checklist + memo export | Todo   |
@@ -37,6 +37,7 @@ Run `source .venv/bin/activate` again each time you open a new terminal.
 ```bash
 python pdf_text.py path/to/report.pdf       # print page count + page starts
 python extract.py path/to/report.pdf        # print every extracted field
+python flags.py path/to/report.pdf          # print the review flags
 python tools/make_sample_pdf.py             # rebuild the fake test PDFs
 pytest                                      # run all tests
 ```
@@ -47,6 +48,7 @@ pytest                                      # run all tests
 soc-analyzer/
 ├── pdf_text.py              # Stage 1: PDF -> list of pages (number + text)
 ├── extract.py               # Stage 2: pages -> report facts (regex)
+├── flags.py                 # Stage 3: facts -> red / amber / green flags
 ├── tools/
 │   └── make_sample_pdf.py   # builds fake PDFs for testing
 ├── tests/
@@ -55,7 +57,8 @@ soc-analyzer/
 │   │   ├── fake_soc2_report.pdf   # same report as a PDF (generated)
 │   │   └── fake_scanned.pdf       # a PDF with no text, imitating a scan
 │   ├── test_pdf_text.py
-│   └── test_extract.py
+│   ├── test_extract.py
+│   └── test_flags.py
 ├── requirements.txt
 └── pytest.ini
 ```
@@ -97,6 +100,25 @@ One small function per field. Each returns a `Finding(value, page, excerpt)`
 | `subservice_organizations` | Subservice org names | "subservice organization, Name..." plus a list of well-known providers |
 | `cuecs`, `csocs` | Each listed control | Items (CUEC-1, 1., bullets) under the heading, until the next section |
 | `extract_all` | Everything | Runs all of the above; returns a dictionary |
+
+### `flags.py`: what needs attention
+
+Each rule is one function returning a `Flag(level, topic, reason, page)`.
+`build_flags()` runs them all and sorts worst first; `overall_level()`
+returns the worst level (one red makes the report red).
+
+| Rule | Red | Amber | Green |
+|---|---|---|---|
+| Opinion | Qualified, Adverse, Disclaimer | Not found | Unmodified |
+| Report type | | Type I, or not found | Type II |
+| Period length (Type II only) | | Under 6 months, or not found | 6+ months |
+| Period currency | Over 365 days since end: stale | Over 90 days: request a bridge letter; or not found | 90 days or less |
+| Exceptions | | Any found | None found (verify) |
+| Subservice orgs | | Carve-out, or orgs with unclear method | Inclusive, or none |
+| CUECs | | Any found | None found (verify) |
+
+**If something can't be found, the flag is amber, never green.** Thresholds
+are constants at the top of `flags.py`; change them to match your policy.
 
 ## Limitations
 
