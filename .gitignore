@@ -8,3 +8,10 @@ memos/
 *.pdf
 # ...except the fake test PDFs, which are safe to share.
 !tests/fixtures/*.pdf
+
+# Secrets: never commit API keys. The app reads ANTHROPIC_API_KEY from an
+# environment variable, but block the usual secret files in case one is
+# ever created by mistake or by following a tutorial.
+.env
+.env.*
+.streamlit/secrets.toml
