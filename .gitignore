@@ -1,5 +1,10 @@
 .venv/
 __pycache__/
 .pytest_cache/
-# Never commit real vendor reports by accident
+
+# The repo is public: never commit real vendor reports or review output.
 reports/
+memos/
+*.pdf
+# ...except the fake test PDFs, which are safe to share.
+!tests/fixtures/*.pdf
