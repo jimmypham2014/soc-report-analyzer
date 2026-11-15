@@ -1,0 +1,199 @@
+SOC 2 Type 2 Report
+
+Acme Cloud Services, Inc.
+
+Report on Acme Cloud Services, Inc.'s Description of Its Cloud Hosting
+Platform and on the Suitability of the Design and Operating Effectiveness
+of Its Controls Relevant to Security, Availability, and Confidentiality
+
+For the period January 1, 2026 to June 30, 2026
+
+Prepared by: Smith & Patel LLP
+
+THIS IS A FAKE REPORT CREATED FOR SOFTWARE TESTING. IT DESCRIBES NO REAL
+COMPANY OR AUDIT FIRM.
+=== PAGE BREAK ===
+Section 1: Independent Service Auditor's Report
+
+To: Management of Acme Cloud Services, Inc.
+
+Scope
+
+We have examined Acme Cloud Services, Inc.'s ("Acme" or the "service
+organization") accompanying description of its Cloud Hosting Platform
+(the "system") throughout the period January 1, 2026 to June 30, 2026
+(the "description"), and the suitability of the design and operating
+effectiveness of controls stated in the description throughout the period
+January 1, 2026 to June 30, 2026, to provide reasonable assurance that
+Acme's service commitments and system requirements were achieved based on
+the trust services criteria relevant to Security, Availability, and
+Confidentiality (applicable trust services criteria) set forth in TSP
+section 100, 2017 Trust Services Criteria for Security, Availability,
+Processing Integrity, Confidentiality, and Privacy.
+
+Acme uses a subservice organization, Amazon Web Services, Inc. (AWS), to
+provide data center hosting services. The description indicates that
+complementary subservice organization controls that are suitably designed
+and operating effectively are necessary, along with controls at Acme, to
+achieve Acme's service commitments. The description presents Acme's
+controls and the types of complementary subservice organization controls
+assumed in the design of Acme's controls. The description does not
+disclose the actual controls at the subservice organization. Our
+examination did not include the services provided by the subservice
+organization, and we have not evaluated the suitability of the design or
+operating effectiveness of such complementary subservice organization
+controls.
+
+The description indicates that complementary user entity controls that are
+suitably designed and operating effectively are necessary, along with
+controls at Acme, to achieve Acme's service commitments and system
+requirements. Our examination did not include such complementary user
+entity controls.
+=== PAGE BREAK ===
+Section 1: Independent Service Auditor's Report (continued)
+
+Basis for Qualified Opinion
+
+Acme states in its description that user access to production systems is
+removed within one business day of termination. However, as noted on
+page 7 of the description of tests of controls and results, for 4 of 25
+terminated employees sampled, access to production systems was not removed
+until between 6 and 21 days after termination. As a result, controls were
+not operating effectively to provide reasonable assurance that Acme's
+service commitments and system requirements were achieved based on
+criterion CC6.2.
+
+Qualified Opinion
+
+In our opinion, except for the matter described in the Basis for Qualified
+Opinion paragraph, in all material respects,
+
+a. the description presents the Cloud Hosting Platform that was designed
+   and implemented throughout the period January 1, 2026 to June 30, 2026,
+   in accordance with the description criteria.
+
+b. the controls stated in the description were suitably designed and
+   operated effectively throughout the period January 1, 2026 to
+   June 30, 2026, to provide reasonable assurance that Acme's service
+   commitments and system requirements were achieved based on the
+   applicable trust services criteria, if complementary subservice
+   organization controls and complementary user entity controls assumed in
+   the design of Acme's controls operated effectively throughout that
+   period.
+
+Smith & Patel LLP
+Denver, Colorado
+August 14, 2026
+=== PAGE BREAK ===
+Section 2: Management's Assertion
+
+We have prepared the accompanying description of Acme Cloud Services,
+Inc.'s Cloud Hosting Platform throughout the period January 1, 2026 to
+June 30, 2026, based on the criteria for a description of a service
+organization's system set forth in DC section 200, 2018 Description
+Criteria for a Description of a Service Organization's System in a SOC 2
+Report.
+
+We confirm, to the best of our knowledge and belief, that the controls
+stated in the description were suitably designed and operated effectively
+throughout the period, except for the matter described in the Basis for
+Qualified Opinion paragraph of the independent service auditor's report.
+
+Acme Cloud Services, Inc. Management
+=== PAGE BREAK ===
+Section 3: Description of the Cloud Hosting Platform
+
+Subservice Organizations
+
+Acme uses the carve-out method to present the following subservice
+organization. The controls at the subservice organization are excluded
+from the scope of this report.
+
+Subservice Organization        Services Provided
+Amazon Web Services, Inc.      Data center hosting, physical security,
+                               and environmental protection
+
+Complementary Subservice Organization Controls
+
+Acme's controls are designed with the assumption that the following
+controls are implemented by AWS:
+
+CSOC-1  AWS is responsible for restricting physical access to data center
+        facilities to authorized personnel.
+CSOC-2  AWS is responsible for maintaining environmental protections,
+        including fire suppression and power redundancy.
+CSOC-3  AWS is responsible for monitoring and maintaining the hardware
+        that supports the hosted infrastructure.
+=== PAGE BREAK ===
+Section 3: Description of the Cloud Hosting Platform (continued)
+
+Complementary User Entity Controls
+
+Acme's controls were designed with the assumption that certain controls
+would be implemented by user entities. User entities should implement
+the following controls:
+
+CUEC-1  User entities are responsible for provisioning and removing their
+        own users' access to the Acme customer portal.
+CUEC-2  User entities are responsible for ensuring that their users keep
+        their passwords and multi-factor authentication devices secure.
+CUEC-3  User entities are responsible for reviewing the access of their
+        users to the Acme platform at least quarterly.
+CUEC-4  User entities are responsible for notifying Acme of security
+        incidents involving their accounts in a timely manner.
+=== PAGE BREAK ===
+Section 4: Trust Services Criteria, Related Controls, and Tests of Controls
+
+Control   Control Activity                 Test Performed               Results
+CC6.1     Access to production systems     Inspected the access         No exceptions noted.
+          requires multi-factor            configuration for a
+          authentication.                  sample of 25 users.
+
+CC6.2     User access is removed within    Inspected termination        Exception noted. For 4
+          one business day of              tickets and access logs      of 25 terminated
+          termination.                     for a sample of 25           employees sampled,
+                                           terminated employees.        access was removed
+                                                                        between 6 and 21 days
+                                                                        after termination.
+
+CC6.3     User access is reviewed          Inspected quarterly access   No exceptions noted.
+          quarterly by management.         reviews for Q1 and Q2.
+=== PAGE BREAK ===
+Section 4: Trust Services Criteria, Related Controls, and Tests of Controls
+(continued)
+
+Control   Control Activity                 Test Performed               Results
+CC7.2     Security events are logged and   Inspected the monitoring     No exceptions noted.
+          monitored 24x7.                  tool configuration and a
+                                           sample of alerts.
+
+CC8.1     Changes to production are        Inspected a sample of 40     Deviation noted. For 2
+          approved before deployment.      production changes.          of 40 changes sampled,
+                                                                        approval was documented
+                                                                        after deployment.
+
+A1.2      Backups are performed daily      Inspected backup logs for    No exceptions noted.
+          and tested quarterly.            a sample of 25 days and
+                                           restore tests for Q1 and
+                                           Q2.
+
+C1.1      Confidential customer data is    Inspected encryption         No exceptions noted.
+          encrypted at rest.               settings for production
+                                           databases.
+=== PAGE BREAK ===
+Section 5: Other Information Provided by Acme Cloud Services, Inc.
+
+The information in this section is presented by management and has not
+been subjected to the procedures applied in the examination.
+
+Management's Response to Exceptions
+
+CC6.2 - Management's response: Acme has implemented an automated
+integration between the HR system and the identity provider so that
+access is disabled automatically when a termination is recorded. The
+integration went live on July 15, 2026.
+
+CC8.1 - Management's response: The two changes were emergency fixes.
+Acme has updated its change management procedure to require
+retrospective approval within 24 hours for emergency changes and has
+added a weekly report of unapproved changes.

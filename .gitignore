@@ -1,0 +1,5 @@
+.venv/
+__pycache__/
+.pytest_cache/
+# Never commit real vendor reports by accident
+reports/
