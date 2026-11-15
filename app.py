@@ -30,6 +30,7 @@ from ai_analysis import (MAX_CHARS, MODEL, AnalysisError, api_key_is_set,
 from extract import extract_all
 from flags import build_flags, overall_level
 from pdf_text import PdfReadError, extract_pages_from_pdf, load_pages_from_text, looks_scanned
+from review import CHECKLIST, STATUSES, build_memo, checklist_hints, memo_file_name
 
 SAMPLE_REPORT = os.path.join(os.path.dirname(__file__),
                              "tests", "fixtures", "fake_soc2_report.pdf")
@@ -346,3 +347,53 @@ if result:
         f"{info['output_tokens']:,} output tokens · "
         f"estimated cost ${info['estimated_cost_usd']:.3f}"
     )
+
+
+# --- Reviewer checklist (stage 6) -------------------------------------------
+st.subheader("✅ Reviewer checklist")
+st.caption("Each item shows what the tool found. Only you set the status: "
+           "everything starts as \"Not reviewed\".")
+
+hints = checklist_hints(fields, flags)
+answers = {}
+for number, (key, question) in enumerate(CHECKLIST, start=1):
+    with st.container(border=True):
+        left, middle, right = st.columns([3, 2, 3])
+        left.markdown(f"**{number}. {question}**")
+        left.caption(f"Tool says: {hints[key]}")
+        # A widget with a `key` keeps its value when Streamlit re-runs the
+        # script. Putting file_id in the key keeps each report's answers
+        # separate if you switch files.
+        status = middle.selectbox("Status", STATUSES, key=f"{file_id}-{key}-status")
+        notes = right.text_input("Notes", key=f"{file_id}-{key}-notes")
+        answers[key] = {"status": status, "notes": notes}
+
+# --- Review memo (stage 6) --------------------------------------------------
+st.subheader("📝 Review memo")
+reviewer = st.text_input("Reviewer name (optional)", key="reviewer")
+
+claude_result = st.session_state["claude_results"].get(file_id)
+memo = build_memo(
+    fields, flags, answers, file_name,
+    analysis=claude_result[0] if claude_result else None,
+    reviewer=reviewer,
+)
+
+remaining = sum(1 for answer in answers.values() if answer["status"] == STATUSES[0])
+if remaining:
+    st.caption(f"{remaining} of {len(CHECKLIST)} checklist items not yet reviewed. "
+               "You can still download; the memo will say so.")
+st.caption("Includes the summary, flags, your checklist, the evidence"
+           + (", and the Claude analysis." if claude_result else
+              ". Run the Claude analysis above first if you want it included."))
+
+st.download_button(
+    "Download review memo (.md)",
+    data=memo,
+    file_name=memo_file_name(fields),
+    mime="text/markdown",
+    type="primary",
+)
+with st.expander("Preview the memo"):
+    # Streamlit treats $...$ as maths, so escape dollar signs for display only.
+    st.markdown(memo.replace("$", "\\$"))

@@ -11,6 +11,9 @@ Everything runs on your machine. The only exception is the optional Claude
 analysis button (stage 5), which sends selected pages to the Claude API only
 when you click it.
 
+**See the output without installing anything:** [sample review memo](docs/sample_review_memo.md),
+generated from the fake report in `tests/fixtures/`.
+
 > **Results are a first pass.** The tool finds text with pattern matching.
 > Always verify findings against the report itself.
 
@@ -23,7 +26,7 @@ when you click it.
 | 3     | Red / amber / green flags        | Done   |
 | 4     | Streamlit web UI                 | Done   |
 | 5     | Optional Claude analysis         | Done   |
-| 6     | Reviewer checklist + memo export | Todo   |
+| 6     | Reviewer checklist + memo export | Done   |
 
 ## Setup (one time)
 
@@ -121,6 +124,7 @@ soc-analyzer/
 ├── flags.py                 # Stage 3: facts -> red / amber / green flags
 ├── app.py                   # Stage 4: Streamlit web page
 ├── ai_analysis.py           # Stage 5: optional Claude analysis
+├── review.py                # Stage 6: reviewer checklist + Markdown memo
 ├── .streamlit/config.toml   # local-only, no telemetry, no Deploy button
 ├── tools/
 │   └── make_sample_pdf.py   # builds fake PDFs for testing
@@ -133,7 +137,10 @@ soc-analyzer/
 │   ├── test_extract.py
 │   ├── test_flags.py
 │   ├── test_app.py
-│   └── test_ai_analysis.py
+│   ├── test_ai_analysis.py
+│   └── test_review.py
+├── docs/
+│   └── sample_review_memo.md     # example memo from the fake report
 ├── requirements.txt
 └── pytest.ini
 ```
@@ -239,6 +246,24 @@ file) were also checked in a real browser.
   clicking anything else neither loses them nor calls (and bills) the API again.
 - **Tests never call the real API.** They swap the SDK's network layer for a
   local function returning canned answers, so they're free and need no key.
+
+### `review.py`: checklist and memo
+
+- `CHECKLIST` holds the 9 reviewer questions: scope, period, opinion,
+  criteria, exceptions, CUECs, subservice reports, bridge letter, and
+  licensed CPA firm.
+- `checklist_hints()` shows what the tool found for each item ("Tool says:
+  period ended 138 days ago..."). **It never sets a status**: every item
+  starts as "Not reviewed" and only the reviewer changes it.
+- `build_memo()` writes one Markdown document: summary table, flags, the
+  checklist with statuses and notes (and how many items are still
+  unreviewed), the Basis for Opinion, each exception with its management
+  response, subservice orgs, CUECs, CSOCs, and the Claude analysis if it was
+  run (labelled AI-generated). `md_cell()` escapes `|` and line breaks so
+  notes can't break the tables.
+- In the app, each dropdown and notes box has a `key` that includes the
+  file's fingerprint, so answers survive re-runs and stay separate per report.
+  "Download review memo" saves the `.md` file to your browser's downloads.
 
 ### `.streamlit/config.toml`: privacy settings
 

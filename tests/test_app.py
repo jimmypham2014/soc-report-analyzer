@@ -111,3 +111,32 @@ def test_claude_button_runs_once_and_result_survives_reruns(monkeypatch):
     at.checkbox[0].check().run()
     assert calls == [1]
     assert "Overall risk: High" in all_text(at)
+
+
+# --- Stage 6: checklist and memo ---------------------------------------------
+
+def test_checklist_and_memo(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    at = AppTest.from_file(APP, default_timeout=30).run()
+    at.checkbox[0].check().run()
+    assert not at.exception
+
+    # Nine status dropdowns, all starting at "Not reviewed".
+    assert len(at.selectbox) == 9
+    assert all(box.value == "Not reviewed" for box in at.selectbox)
+    assert "Tool says: Needed: the period ended" in all_text(at)
+    assert "9 of 9 checklist items not yet reviewed" in all_text(at)
+
+    # Answer one item; the memo preview must reflect it.
+    at.selectbox[2].set_value("Not satisfactory").run()
+    at.text_input[2].input("Qualified on CC6.2").run()
+    at.text_input(key="reviewer").input("J. Pham").run()
+    text = all_text(at)
+    assert "8 of 9 checklist items not yet reviewed" in text
+    assert "| 3 | Auditor's opinion is acceptable | Not satisfactory | Qualified on CC6.2 |" in text
+    assert "**Reviewer:** J. Pham" in text
+
+    # The answer survives an unrelated re-run.
+    at.checkbox[0].uncheck().run()
+    at.checkbox[0].check().run()
+    assert at.selectbox[2].value == "Not satisfactory"
