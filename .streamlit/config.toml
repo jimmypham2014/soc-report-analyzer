@@ -1,0 +1,15 @@
+# Streamlit settings for this project. Streamlit reads this file
+# automatically when you run "streamlit run app.py" from this folder.
+
+[server]
+# Only accept connections from this computer. Without this, anyone on the
+# same network (office Wi-Fi...) could open the page and see reports.
+address = "localhost"
+
+[browser]
+# Don't send anonymous usage statistics to Streamlit.
+gatherUsageStats = false
+
+[client]
+# Hide the "Deploy" button, so a report can't be published by accident.
+toolbarMode = "minimal"

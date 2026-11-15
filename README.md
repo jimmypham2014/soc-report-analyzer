@@ -17,7 +17,7 @@ analysis step (stage 5), which sends selected excerpts to the Claude API.
 | 1     | Setup + PDF text by page         | Done   |
 | 2     | Rule-based field extraction      | Done   |
 | 3     | Red / amber / green flags        | Done   |
-| 4     | Streamlit web UI                 | Todo   |
+| 4     | Streamlit web UI                 | Done   |
 | 5     | Optional Claude analysis         | Todo   |
 | 6     | Reviewer checklist + memo export | Todo   |
 
@@ -32,7 +32,16 @@ pip install -r requirements.txt  # install the libraries
 
 Run `source .venv/bin/activate` again each time you open a new terminal.
 
-## Try it
+## Run the web app
+
+```bash
+streamlit run app.py
+```
+
+Open http://localhost:8501, then upload a SOC report PDF or tick
+"try the built-in fake sample report". Press Ctrl+C in the terminal to stop.
+
+## Try the pieces from the command line
 
 ```bash
 python pdf_text.py path/to/report.pdf       # print page count + page starts
@@ -49,6 +58,8 @@ soc-analyzer/
 ├── pdf_text.py              # Stage 1: PDF -> list of pages (number + text)
 ├── extract.py               # Stage 2: pages -> report facts (regex)
 ├── flags.py                 # Stage 3: facts -> red / amber / green flags
+├── app.py                   # Stage 4: Streamlit web page
+├── .streamlit/config.toml   # local-only, no telemetry, no Deploy button
 ├── tools/
 │   └── make_sample_pdf.py   # builds fake PDFs for testing
 ├── tests/
@@ -58,7 +69,8 @@ soc-analyzer/
 │   │   └── fake_scanned.pdf       # a PDF with no text, imitating a scan
 │   ├── test_pdf_text.py
 │   ├── test_extract.py
-│   └── test_flags.py
+│   ├── test_flags.py
+│   └── test_app.py
 ├── requirements.txt
 └── pytest.ini
 ```
@@ -119,6 +131,31 @@ returns the worst level (one red makes the report red).
 
 **If something can't be found, the flag is amber, never green.** Thresholds
 are constants at the top of `flags.py`; change them to match your policy.
+
+### `app.py`: the web page
+
+Streamlit re-runs the whole script on every click, top to bottom. The page:
+
+1. Takes an uploaded PDF (or the fake sample).
+2. Calls `analyze()`, which reads the PDF and runs `extract_all()` and
+   `build_flags()`. It is wrapped in `@st.cache_data`, so a file is only
+   read once, not on every click.
+3. Stops with a clear message for unreadable PDFs (`PdfReadError`) and
+   scanned PDFs (`looks_scanned`), suggesting OCR.
+4. Shows a "verify in the report" warning, the overall level, tiles, the
+   flags, and expandable evidence: each excerpt with its PDF page number.
+   Exceptions are shown next to the management response for the same
+   control ID.
+
+`tests/test_app.py` drives the page with Streamlit's `AppTest` (no browser).
+`AppTest` can't upload files, so uploads (normal, scanned, and a corrupt
+file) were also checked in a real browser.
+
+### `.streamlit/config.toml`: privacy settings
+
+- `address = "localhost"`: only this computer can open the page.
+- `gatherUsageStats = false`: no usage statistics sent to Streamlit.
+- `toolbarMode = "minimal"`: hides the "Deploy" button.
 
 ## Limitations
 
