@@ -1,8 +1,5 @@
 # SOC Report Analyzer
 
-<img width="1482" height="1274" alt="image" src="https://github.com/user-attachments/assets/abbc1468-5c32-41f2-86be-0dfd399bcbae" />
-
-
 A local tool that reads a SOC 1 or SOC 2 report (PDF) and pulls out what a
 vendor-risk reviewer needs: report type, period, opinion, exceptions, CUECs,
 subservice organizations, and review flags.
@@ -22,10 +19,9 @@ generated from the fake report in `tests/fixtures/`.
 A walkthrough using the fake sample report included in this repo (no real
 vendor data):
 
-<!-- DEMO VIDEO: in GitHub's README editor, put the cursor on the empty line
-     below this comment and drag your .mp4 in (under 10 MB). GitHub inserts a
-     https://github.com/user-attachments/assets/... link that plays as a video.
-     Then delete this comment. -->
+
+https://github.com/user-attachments/assets/e8c9f04c-5ac4-40ea-8a4f-4db391b4c734
+
 
 
 ## Status
