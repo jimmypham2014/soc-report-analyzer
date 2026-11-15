@@ -8,7 +8,8 @@ vendor-risk reviewer needs: report type, period, opinion, exceptions, CUECs,
 subservice organizations, and review flags.
 
 Everything runs on your machine. The only exception is the optional Claude
-analysis step (stage 5), which sends selected excerpts to the Claude API.
+analysis button (stage 5), which sends selected pages to the Claude API only
+when you click it.
 
 > **Results are a first pass.** The tool finds text with pattern matching.
 > Always verify findings against the report itself.
@@ -21,7 +22,7 @@ analysis step (stage 5), which sends selected excerpts to the Claude API.
 | 2     | Rule-based field extraction      | Done   |
 | 3     | Red / amber / green flags        | Done   |
 | 4     | Streamlit web UI                 | Done   |
-| 5     | Optional Claude analysis         | Todo   |
+| 5     | Optional Claude analysis         | Done   |
 | 6     | Reviewer checklist + memo export | Todo   |
 
 ## Setup (one time)
@@ -82,12 +83,31 @@ streamlit run app.py
 Open http://localhost:8501, then upload a SOC report PDF or tick
 "try the built-in fake sample report". Press Ctrl+C in the terminal to stop.
 
+### Optional: Claude analysis
+
+The "Run Claude analysis" button needs an Anthropic API key (from
+https://console.anthropic.com, billed separately from a claude.ai plan). Set
+it as an environment variable **before** starting the app - never put it in
+a file in this repo.
+
+```powershell
+$env:ANTHROPIC_API_KEY = "your-key"          # PowerShell, this window only
+```
+
+```bash
+export ANTHROPIC_API_KEY="your-key"          # Mac / Linux, this terminal only
+```
+
+Everything else works without a key. A run on the fake sample report costs
+roughly $0.05; a full-size report with the 100k-character cap, a few times that.
+
 ## Try the pieces from the command line
 
 ```bash
 python pdf_text.py path/to/report.pdf       # print page count + page starts
 python extract.py path/to/report.pdf        # print every extracted field
 python flags.py path/to/report.pdf          # print the review flags
+python ai_analysis.py path/to/report.pdf    # Claude analysis as JSON (needs key, costs money)
 python tools/make_sample_pdf.py             # rebuild the fake test PDFs
 pytest                                      # run all tests
 ```
@@ -100,6 +120,7 @@ soc-analyzer/
 ├── extract.py               # Stage 2: pages -> report facts (regex)
 ├── flags.py                 # Stage 3: facts -> red / amber / green flags
 ├── app.py                   # Stage 4: Streamlit web page
+├── ai_analysis.py           # Stage 5: optional Claude analysis
 ├── .streamlit/config.toml   # local-only, no telemetry, no Deploy button
 ├── tools/
 │   └── make_sample_pdf.py   # builds fake PDFs for testing
@@ -111,7 +132,8 @@ soc-analyzer/
 │   ├── test_pdf_text.py
 │   ├── test_extract.py
 │   ├── test_flags.py
-│   └── test_app.py
+│   ├── test_app.py
+│   └── test_ai_analysis.py
 ├── requirements.txt
 └── pytest.ini
 ```
@@ -191,6 +213,32 @@ Streamlit re-runs the whole script on every click, top to bottom. The page:
 `tests/test_app.py` drives the page with Streamlit's `AppTest` (no browser).
 `AppTest` can't upload files, so uploads (normal, scanned, and a corrupt
 file) were also checked in a real browser.
+
+### `ai_analysis.py`: the optional Claude step
+
+- **What's sent:** `pages_to_send()` lists the pages the regex stage found
+  relevant, most important first: opinion, basis, scope, exceptions,
+  management responses, subservice orgs, CUECs, CSOCs. `build_excerpts()`
+  joins whole pages, each labelled `--- PDF page N ---`, up to 100,000
+  characters, and reports any pages left out. The page shows exactly what
+  will be sent before you click.
+- **The answer's shape:** Pydantic classes (`SocAnalysis` and friends)
+  describe the JSON: exceptions with a High/Medium/Low severity and reason,
+  CUECs with a suggested owner, subservice orgs, an overall rating, and
+  vendor questions (trimmed to 8). `client.beta.messages.parse()` asks
+  Claude for that shape and validates the answer; anything that doesn't
+  match is rejected with a clear message.
+- **Prompt-injection guard:** report text goes inside `<report_excerpts>`
+  tags, and the system prompt says to treat it as data, never instructions.
+- **Model and settings:** `claude-opus-5-5`, effort `high`, and server-side
+  refusal fallbacks (if a safety check declines, the API retries on another
+  model).
+- **Errors** (bad key, rate limit, network, refusal, cut-off answer) become
+  plain-English `AnalysisError` messages.
+- **In the app**, results are stored in `st.session_state` per file, so
+  clicking anything else neither loses them nor calls (and bills) the API again.
+- **Tests never call the real API.** They swap the SDK's network layer for a
+  local function returning canned answers, so they're free and need no key.
 
 ### `.streamlit/config.toml`: privacy settings
 

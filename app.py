@@ -15,13 +15,18 @@ How Streamlit works, in one paragraph:
 
 Privacy: everything here runs on your machine. Nothing is uploaded anywhere;
 the "upload" button just hands the file from your browser to this script.
+The one exception is the optional "Run Claude analysis" button (stage 5),
+which sends selected pages to the Claude API - only when clicked.
 """
 
+import hashlib
 import io
 import os
 
 import streamlit as st
 
+from ai_analysis import (MAX_CHARS, MODEL, AnalysisError, api_key_is_set,
+                         build_excerpts, run_analysis)
 from extract import extract_all
 from flags import build_flags, overall_level
 from pdf_text import PdfReadError, extract_pages_from_pdf, load_pages_from_text, looks_scanned
@@ -92,6 +97,19 @@ def show_excerpt(page, text):
     st.code(text or "(no excerpt)", language=None, wrap_lines=True)
 
 
+def as_table(items):
+    """Turn Claude's results into table rows with readable column names.
+
+    model_dump() turns each Pydantic object into a plain dictionary; we then
+    rename keys like "control_id" to "Control id" for the column headers.
+    """
+    return [
+        {key.replace("_", " ").capitalize(): value
+         for key, value in item.model_dump().items()}
+        for item in items
+    ]
+
+
 def show_finding_list(findings, empty_message):
     """Show every item in a list of Findings (CUECs, CSOCs, ...)."""
     if not findings:
@@ -106,7 +124,8 @@ def show_finding_list(findings, empty_message):
 
 st.set_page_config(page_title="SOC Report Analyzer", page_icon="📄", layout="wide")
 st.title("📄 SOC Report Analyzer")
-st.caption("Upload a SOC 1 or SOC 2 report. It is processed on this computer only.")
+st.caption("Upload a SOC 1 or SOC 2 report. It is processed on this computer only, "
+           "unless you choose to run the optional Claude analysis.")
 
 uploaded = st.file_uploader("SOC report (PDF)", type=["pdf"])
 use_sample = st.checkbox("Or try the built-in fake sample report")
@@ -252,3 +271,78 @@ with st.expander(f"Complementary User Entity Controls ({len(fields['cuecs'])})")
 
 with st.expander(f"Complementary Subservice Organization Controls ({len(fields['csocs'])})"):
     show_finding_list(fields["csocs"], "No CSOCs found.")
+
+
+# --- Claude analysis (optional, stage 5) ------------------------------------
+st.subheader("🤖 Claude analysis (optional)")
+
+excerpt_text, pages_included, pages_left_out = build_excerpts(pages, fields)
+st.caption(
+    f"Sends {len(excerpt_text):,} characters from PDF pages "
+    f"{', '.join(str(n) for n in pages_included)} to the Claude API ({MODEL}). "
+    "Nothing is sent until you click the button; the rest of the report "
+    "stays on this computer."
+)
+if pages_left_out:
+    st.caption(f"Over the {MAX_CHARS:,}-character limit, so these pages are NOT sent: "
+               f"{', '.join(str(n) for n in pages_left_out)}.")
+
+# Streamlit forgets everything between re-runs, except st.session_state.
+# We keep each result there, keyed by a fingerprint of the file, so clicking
+# anything else on the page doesn't lose the result - or pay for it again.
+if "claude_results" not in st.session_state:
+    st.session_state["claude_results"] = {}
+file_id = hashlib.sha256(file_bytes).hexdigest()
+
+if not api_key_is_set():
+    st.info(
+        "To use this, set the **ANTHROPIC_API_KEY** environment variable, then "
+        "restart the app. Everything else on this page works without it.\n\n"
+        "PowerShell: `$env:ANTHROPIC_API_KEY = \"your-key\"`  \n"
+        "Mac/Linux: `export ANTHROPIC_API_KEY=\"your-key\"`"
+    )
+elif st.button("Run Claude analysis", type="primary"):
+    with st.spinner("Asking Claude... this usually takes under a minute."):
+        try:
+            st.session_state["claude_results"][file_id] = run_analysis(pages, fields)
+        except AnalysisError as error:
+            st.error(str(error))
+
+result = st.session_state["claude_results"].get(file_id)
+if result:
+    analysis, info = result
+    st.warning(
+        "**AI-generated - verify in the report.** Severity ratings and owners "
+        "are suggestions to start your review, not conclusions.",
+        icon="⚠️",
+    )
+    st.markdown(f"### Overall risk: {analysis.overall_risk.rating}")
+    st.write(analysis.overall_risk.reason)
+
+    st.markdown("**Exceptions**")
+    if analysis.exceptions:
+        st.dataframe(as_table(analysis.exceptions), hide_index=True)
+    else:
+        st.write("Claude found no exceptions in the excerpts.")
+
+    st.markdown("**CUECs and suggested owners**")
+    if analysis.cuecs:
+        st.dataframe(as_table(analysis.cuecs), hide_index=True)
+    else:
+        st.write("No CUECs in the excerpts.")
+
+    st.markdown("**Subservice organizations**")
+    if analysis.subservice_organizations:
+        st.dataframe(as_table(analysis.subservice_organizations), hide_index=True)
+    else:
+        st.write("No subservice organizations in the excerpts.")
+
+    st.markdown("**Questions for the vendor**")
+    st.markdown("\n".join(f"{number}. {question}" for number, question
+                           in enumerate(analysis.vendor_questions, start=1)))
+
+    st.caption(
+        f"{info['model']} · {info['input_tokens']:,} input / "
+        f"{info['output_tokens']:,} output tokens · "
+        f"estimated cost ${info['estimated_cost_usd']:.3f}"
+    )

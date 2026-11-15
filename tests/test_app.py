@@ -61,3 +61,53 @@ def test_exception_is_paired_with_its_management_response():
     text = all_text(at)
     assert "Control CC6.2" in text
     assert "automated integration between the HR system" in text
+
+
+# --- Stage 5: the optional Claude analysis section ---------------------------
+
+def test_claude_section_without_a_key(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    at = AppTest.from_file(APP, default_timeout=30).run()
+    at.checkbox[0].check().run()
+    assert not at.exception
+    text = all_text(at)
+    assert "set the **ANTHROPIC_API_KEY** environment variable" in text
+    assert "Sends" in text and "PDF pages 3, 1, 7, 8, 9, 5, 2, 6" in text
+    assert len(at.button) == 0  # no button without a key
+
+
+def test_claude_button_runs_once_and_result_survives_reruns(monkeypatch):
+    import ai_analysis
+    from test_ai_analysis import GOOD_ANSWER
+
+    calls = []
+
+    def stand_in(pages, fields):
+        # Pretend to be Claude: return a validated answer, count the calls.
+        calls.append(1)
+        analysis = ai_analysis.SocAnalysis.model_validate(GOOD_ANSWER)
+        info = {"model": "claude-opus-5-5", "input_tokens": 3000,
+                "output_tokens": 2000, "estimated_cost_usd": 0.052,
+                "pages_sent": [], "pages_left_out": [], "characters_sent": 0}
+        return analysis, info
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-not-real")
+    monkeypatch.setattr(ai_analysis, "run_analysis", stand_in)
+
+    at = AppTest.from_file(APP, default_timeout=30).run()
+    at.checkbox[0].check().run()
+    assert calls == []                      # nothing sent before the click
+
+    at.button[0].click().run()
+    assert not at.exception
+    assert calls == [1]
+    text = all_text(at)
+    assert "Overall risk: High" in text
+    assert "AI-generated - verify in the report." in text
+    assert len(at.dataframe) == 3           # exceptions, CUECs, subservice orgs
+
+    # Interacting again re-runs the script, but must NOT call Claude again.
+    at.checkbox[0].uncheck().run()
+    at.checkbox[0].check().run()
+    assert calls == [1]
+    assert "Overall risk: High" in all_text(at)

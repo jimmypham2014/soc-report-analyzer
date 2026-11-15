@@ -2,6 +2,7 @@
 pdfplumber==0.11.10   # reads text out of PDFs, page by page
 streamlit==1.67.0     # the local web UI (stage 4)
 anthropic==2.8.0      # Claude API client for the optional AI step (stage 5)
+pydantic==2.14.3      # describes and checks the JSON shape of Claude's answer (stage 5)
 
 # Development: only for tests and building sample PDFs
 pytest==9.2.0         # runs the tests in tests/
